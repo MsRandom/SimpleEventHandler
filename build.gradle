@@ -1,0 +1,73 @@
+buildscript {
+    repositories {
+        maven {
+            url = "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    dependencies {
+        classpath group: "org.jfrog.buildinfo", name: "build-info-extractor-gradle", version: "4.7.2"
+    }
+}
+
+apply plugin: "java"
+apply plugin: "maven-publish"
+
+def build = System.getenv("BUILD_NUMBER") ?: "0"
+
+group = "net.msrandom.events"
+version = "1.0.0${build == "0" ? "" : "-" + build}"
+archivesBaseName = "SimpleEventHandler"
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = JavaVersion.VERSION_1_8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation(group: "org.junit.jupiter", name: "junit-jupiter-api", version: "5.8.0-M1")
+    testImplementation(group: "org.junit.jupiter", name: "junit-jupiter-engine", version: "5.8.0-M1")
+}
+
+test {
+    useJUnitPlatform()
+    maxHeapSize = "1G"
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    archiveClassifier.set("sources")
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+if (hasProperty("maven_username") && hasProperty("maven_password")) {
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                groupId = group
+                artifactId = archivesBaseName
+
+                from components.java
+                artifact sourcesJar
+            }
+        }
+
+        repositories {
+            maven {
+                url = "https://maven.msrandom.net/repository/root/"
+                credentials {
+                    username = maven_username
+                    password = maven_password
+                }
+            }
+        }
+    }
+}
+
+if (build != "0") {
+    tasks.build.finalizedBy publish
+}

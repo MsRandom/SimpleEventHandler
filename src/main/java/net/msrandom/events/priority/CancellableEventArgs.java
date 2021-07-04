@@ -1,11 +1,11 @@
-package net.msrandom.events.additional;
+package net.msrandom.events.priority;
 
 import net.msrandom.events.EventArgs;
 
 public class CancellableEventArgs extends EventArgs {
     private boolean isCanceled;
 
-    public void setCanceled() {
+    public void cancel() {
         isCanceled = true;
     }
 
